@@ -1,0 +1,17 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /bookings/{document} {
+      allow read, write: if true;
+    }
+    match /games/{document} {
+      allow read, write: if true;
+    }
+    match /packages/{document} {
+      allow read, write: if true;
+    }
+    match /activeSessions/{document} {
+      allow read, write: if true;
+    }
+  }
+}

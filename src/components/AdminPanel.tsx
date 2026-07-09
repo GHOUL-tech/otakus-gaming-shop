@@ -77,7 +77,11 @@ export default function AdminPanel({
     e.preventDefault();
     setLoginError('');
 
-    if (adminUsername === ACCOUNTS.admin.username && adminPassword === ACCOUNTS.admin.password) {
+    const matchedAdmin = ACCOUNTS.admins.find(
+      a => a.username.toLowerCase() === adminUsername.trim().toLowerCase() && a.password === adminPassword
+    );
+
+    if (matchedAdmin) {
       onLoginAdmin();
       setAdminUsername('');
       setAdminPassword('');
@@ -234,10 +238,6 @@ export default function AdminPanel({
               Verify Credentials
             </button>
           </form>
-
-          <div className="pt-3 border-t border-white/5 font-mono text-[10px] text-gray-500 text-center">
-            🔑 Default ID: <code className="text-white font-bold">Rahin</code> / Pass: <code className="text-white font-bold">rahin5566</code>
-          </div>
         </div>
       ) : (
         // Authorized Admin Area

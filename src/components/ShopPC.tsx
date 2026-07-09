@@ -377,12 +377,6 @@ export default function ShopPC({
               Unlock Station
             </button>
           </form>
-
-          {/* Quick Info Credentials helper so they know it without seeking description */}
-          <div className="pt-4 border-t border-white/5 font-mono text-[10px] text-gray-500 space-y-1.5 leading-relaxed">
-            <div>🔑 <strong>High PC:</strong> ID: <code className="text-[#00FF00]">RAHINEMP</code> / Pass: <code className="text-[#00FF00]">rahinemp</code></div>
-            <div>🔑 <strong>PSP Station:</strong> ID: <code className="text-white font-bold">psp123</code> / Pass: <code className="text-white font-bold">rahin5566</code></div>
-          </div>
         </div>
       ) : (
         // Logged In Terminal View

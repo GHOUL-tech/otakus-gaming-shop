@@ -1,0 +1,82 @@
+{
+  "entities": {
+    "Booking": {
+      "title": "Booking",
+      "description": "Represents a PC or PSP station pre-booking or walk-in session",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "system": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "duration": { "type": "integer" },
+        "amount": { "type": "integer" },
+        "status": { "type": "string" },
+        "code": { "type": "string" }
+      },
+      "required": ["id", "name", "phone", "system", "date", "time", "duration", "amount", "status", "code"]
+    },
+    "Game": {
+      "title": "Game",
+      "description": "Represents a game in the catalog",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "image": { "type": "string" },
+        "type": { "type": "string" }
+      },
+      "required": ["id", "name", "image", "type"]
+    },
+    "GamePackage": {
+      "title": "GamePackage",
+      "description": "Represents a pricing package",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "duration": { "type": "integer" },
+        "price": { "type": "integer" },
+        "system": { "type": "string" }
+      },
+      "required": ["id", "name", "duration", "price", "system"]
+    },
+    "ActiveSession": {
+      "title": "ActiveSession",
+      "description": "Represents a live active session on a terminal",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "bookingId": { "type": "string" },
+        "system": { "type": "string" },
+        "startTime": { "type": "string" },
+        "duration": { "type": "integer" },
+        "isActive": { "type": "boolean" },
+        "isEnded": { "type": "boolean" },
+        "playerName": { "type": "string" },
+        "code": { "type": "string" }
+      },
+      "required": ["id", "bookingId", "system", "startTime", "duration", "isActive", "isEnded", "playerName", "code"]
+    }
+  },
+  "firestore": {
+    "bookings": {
+      "schema": "Booking",
+      "description": "Pre-bookings and billing records"
+    },
+    "games": {
+      "schema": "Game",
+      "description": "Games catalog"
+    },
+    "packages": {
+      "schema": "GamePackage",
+      "description": "Pricing packages"
+    },
+    "activeSessions": {
+      "schema": "ActiveSession",
+      "description": "Currently active gaming sessions"
+    }
+  }
+}

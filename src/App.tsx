@@ -1,6 +1,20 @@
 import { useState, useEffect } from 'react';
 import { Booking, Game, GamePackage, ActiveSession } from './types';
-import { DEFAULT_GAMES, DEFAULT_PACKAGES } from './data/defaultData';
+import {
+  seedInitialDataIfEmpty,
+  subscribeBookings,
+  subscribeGames,
+  subscribePackages,
+  subscribeActiveSessions,
+  fbAddBooking,
+  fbUpdateBookingStatus,
+  fbDeleteBooking,
+  fbAddGame,
+  fbAddPackage,
+  fbDeletePackage,
+  fbSaveActiveSession,
+  fbDeleteActiveSession
+} from './lib/firebase';
 
 // Component Imports
 import Home from './components/Home';
@@ -33,93 +47,40 @@ export default function App() {
   // Digital Live Clock
   const [currentTime, setCurrentTime] = useState<string>('');
 
-  // Initialize and load from LocalStorage
+  // Initialize and load from Firebase Firestore (with fallback/seeding)
   useEffect(() => {
-    // 1. Bookings
-    const storedBookings = localStorage.getItem('gaming_shop_bookings');
-    if (storedBookings) {
-      setBookings(JSON.parse(storedBookings));
-    } else {
-      // Seed an initial booking so schedule looks lively
-      const initialBookings: Booking[] = [
-        {
-          id: 'seed-1',
-          name: 'Shakil Khan',
-          phone: '01712345678',
-          system: 'PC',
-          date: new Date().toISOString().split('T')[0],
-          time: '14:00',
-          duration: 2,
-          amount: 200,
-          status: 'approved',
-          code: '#PC-8821'
-        },
-        {
-          id: 'seed-2',
-          name: 'Nayeem Hasan',
-          phone: '01899112233',
-          system: 'PSP',
-          date: new Date().toISOString().split('T')[0],
-          time: '16:30',
-          duration: 1,
-          amount: 60,
-          status: 'approved',
-          code: '#PSP-4412'
-        }
-      ];
-      setBookings(initialBookings);
-      localStorage.setItem('gaming_shop_bookings', JSON.stringify(initialBookings));
-    }
+    // 1. Seed initial data to firestore if it is empty
+    seedInitialDataIfEmpty();
 
-    // 2. Games Catalog
-    const storedGames = localStorage.getItem('gaming_shop_games');
-    if (storedGames) {
-      try {
-        const parsed: Game[] = JSON.parse(storedGames);
-        // Overwrite or update images with current DEFAULT_GAMES values to ensure branding changes apply
-        const updated = parsed.map((g: Game) => {
-          const matched = DEFAULT_GAMES.find((dg: Game) => dg.id === g.id);
-          if (matched) {
-            return { ...g, name: matched.name, image: matched.image, type: matched.type };
-          }
-          return g;
-        });
-        
-        // Append any new default games not present in localstorage yet
-        const newDefaults = DEFAULT_GAMES.filter((dg: Game) => !parsed.some((g: Game) => g.id === dg.id));
-        const finalGames = [...updated, ...newDefaults];
+    // 2. Setup Real-time Subscriptions
+    const unsubBookings = subscribeBookings((data) => {
+      setBookings(data);
+    });
 
-        setGames(finalGames);
-        localStorage.setItem('gaming_shop_games', JSON.stringify(finalGames));
-      } catch (e) {
-        setGames(DEFAULT_GAMES);
-        localStorage.setItem('gaming_shop_games', JSON.stringify(DEFAULT_GAMES));
-      }
-    } else {
-      setGames(DEFAULT_GAMES);
-      localStorage.setItem('gaming_shop_games', JSON.stringify(DEFAULT_GAMES));
-    }
+    const unsubGames = subscribeGames((data) => {
+      setGames(data);
+    });
 
-    // 3. Pricing Packages
-    const storedPackages = localStorage.getItem('gaming_shop_packages');
-    if (storedPackages) {
-      setPackages(JSON.parse(storedPackages));
-    } else {
-      setPackages(DEFAULT_PACKAGES);
-      localStorage.setItem('gaming_shop_packages', JSON.stringify(DEFAULT_PACKAGES));
-    }
+    const unsubPackages = subscribePackages((data) => {
+      setPackages(data);
+    });
 
-    // 4. Client active sessions
-    const storedSessions = localStorage.getItem('gaming_shop_active_sessions');
-    if (storedSessions) {
-      setActiveSessions(JSON.parse(storedSessions));
-    }
+    const unsubSessions = subscribeActiveSessions((data) => {
+      setActiveSessions(data);
+    });
 
-    // 5. Client active terminal profiles
+    // 3. Client active terminal profile (still saved in localstorage per client device)
     const storedProfile = localStorage.getItem('gaming_shop_terminal_profile');
     if (storedProfile) {
       setLoggedInProfile(storedProfile as 'PC' | 'PSP');
     }
+
+    return () => {
+      unsubBookings();
+      unsubGames();
+      unsubPackages();
+      unsubSessions();
+    };
   }, []);
 
   // Update clock every second
@@ -138,129 +99,106 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
-  // Setup BroadcastChannel for Instant Inter-Tab State Syncing!
-  useEffect(() => {
-    const channel = new BroadcastChannel('gaming_shop_sync_channel');
-
-    channel.onmessage = (event) => {
-      const { type, data } = event.data;
-      if (type === 'SYNC_ALL_STATES') {
-        if (data.bookings) setBookings(data.bookings);
-        if (data.games) setGames(data.games);
-        if (data.packages) setPackages(data.packages);
-        if (data.activeSessions) setActiveSessions(data.activeSessions);
-      }
-    };
-
-    return () => {
-      channel.close();
-    };
-  }, []);
-
-  // Sync Helper to update localstorage + broadcast to other tabs
-  const saveAndBroadcast = (
-    updatedBookings: Booking[],
-    updatedGames: Game[],
-    updatedPackages: GamePackage[],
-    updatedSessions: ActiveSession[]
-  ) => {
-    localStorage.setItem('gaming_shop_bookings', JSON.stringify(updatedBookings));
-    localStorage.setItem('gaming_shop_games', JSON.stringify(updatedGames));
-    localStorage.setItem('gaming_shop_packages', JSON.stringify(updatedPackages));
-    localStorage.setItem('gaming_shop_active_sessions', JSON.stringify(updatedSessions));
-
-    const channel = new BroadcastChannel('gaming_shop_sync_channel');
-    channel.postMessage({
-      type: 'SYNC_ALL_STATES',
-      data: {
-        bookings: updatedBookings,
-        games: updatedGames,
-        packages: updatedPackages,
-        activeSessions: updatedSessions
-      }
-    });
-  };
-
-  // --- Mutation Functions ---
+  // --- Mutation Functions via Firebase ---
 
   // Add a booking/walk-in bill
-  const handleAddBooking = (newBooking: Booking) => {
-    const nextBookings = [newBooking, ...bookings];
-    setBookings(nextBookings);
-    saveAndBroadcast(nextBookings, games, packages, activeSessions);
+  const handleAddBooking = async (newBooking: Booking) => {
+    try {
+      await fbAddBooking(newBooking);
+    } catch (e) {
+      console.error('Error adding booking:', e);
+    }
   };
 
   // Cancel booking
-  const handleCancelBooking = (id: string) => {
-    const nextBookings = bookings.map(b => (b.id === id ? { ...b, status: 'cancelled' as const } : b));
-    setBookings(nextBookings);
-    saveAndBroadcast(nextBookings, games, packages, activeSessions);
+  const handleCancelBooking = async (id: string) => {
+    try {
+      await fbUpdateBookingStatus(id, 'cancelled');
+    } catch (e) {
+      console.error('Error cancelling booking:', e);
+    }
   };
 
   // Delete booking record completely
-  const handleDeleteBooking = (id: string) => {
-    const nextBookings = bookings.filter(b => b.id !== id);
-    setBookings(nextBookings);
-    saveAndBroadcast(nextBookings, games, packages, activeSessions);
+  const handleDeleteBooking = async (id: string) => {
+    try {
+      await fbDeleteBooking(id);
+    } catch (e) {
+      console.error('Error deleting booking:', e);
+    }
   };
 
   // Add dynamic game title
-  const handleAddGame = (newGame: Game) => {
-    const nextGames = [...games, newGame];
-    setGames(nextGames);
-    saveAndBroadcast(bookings, nextGames, packages, activeSessions);
+  const handleAddGame = async (newGame: Game) => {
+    try {
+      await fbAddGame(newGame);
+    } catch (e) {
+      console.error('Error adding game:', e);
+    }
   };
 
   // Add dynamic package configuration
-  const handleAddPackage = (newPkg: GamePackage) => {
-    const nextPackages = [...packages, newPkg];
-    setPackages(nextPackages);
-    saveAndBroadcast(bookings, games, nextPackages, activeSessions);
+  const handleAddPackage = async (newPkg: GamePackage) => {
+    try {
+      await fbAddPackage(newPkg);
+    } catch (e) {
+      console.error('Error adding package:', e);
+    }
   };
 
   // Delete package configuration
-  const handleDeletePackage = (id: string) => {
-    const nextPackages = packages.filter(p => p.id !== id);
-    setPackages(nextPackages);
-    saveAndBroadcast(bookings, games, nextPackages, activeSessions);
+  const handleDeletePackage = async (id: string) => {
+    try {
+      await fbDeletePackage(id);
+    } catch (e) {
+      console.error('Error deleting package:', e);
+    }
   };
 
   // Client terminal starts playing (activates the timer)
-  const handleStartSession = (newSession: ActiveSession) => {
-    // 1. Remove any stale/ended session for same role
-    const nextSessions = activeSessions
-      .filter(s => s.system !== newSession.system)
-      .concat(newSession);
-    
-    setActiveSessions(nextSessions);
-    saveAndBroadcast(bookings, games, packages, nextSessions);
+  const handleStartSession = async (newSession: ActiveSession) => {
+    try {
+      // 1. Remove any stale/ended session for same role from Firestore
+      const sameSystemSessions = activeSessions.filter(s => s.system === newSession.system);
+      for (const oldSession of sameSystemSessions) {
+        await fbDeleteActiveSession(oldSession.id);
+      }
+      // 2. Add the new active session
+      await fbSaveActiveSession(newSession);
+    } catch (e) {
+      console.error('Error starting session:', e);
+    }
   };
 
   // Client terminal ends session or clears alarm screen
-  const handleEndSession = (code: string) => {
-    const session = activeSessions.find(s => s.code === code);
-    if (!session) return;
+  const handleEndSession = async (code: string) => {
+    try {
+      const session = activeSessions.find(s => s.code === code);
+      if (!session) return;
 
-    let nextSessions: ActiveSession[] = [];
-    if (session.isEnded) {
-      // If it has already ended and they clicked clear/close, remove it completely from active screen
-      nextSessions = activeSessions.filter(s => s.code !== code);
-    } else {
-      // Mark it as ended, which launches the YouTube Alarm / buzzer overlay!
-      nextSessions = activeSessions.map(s =>
-        s.code === code ? { ...s, isActive: false, isEnded: true } : s
-      );
+      if (session.isEnded) {
+        // If it has already ended and they clicked clear/close, remove it completely from active screen
+        await fbDeleteActiveSession(session.id);
+      } else {
+        // Mark it as ended, which launches the YouTube Alarm / buzzer overlay!
+        const updated = { ...session, isActive: false, isEnded: true };
+        await fbSaveActiveSession(updated);
+      }
+    } catch (e) {
+      console.error('Error ending session:', e);
     }
-
-    setActiveSessions(nextSessions);
-    saveAndBroadcast(bookings, games, packages, nextSessions);
   };
 
   // Clear ended notifications from admin alerts
-  const handleClearEndedNotifications = () => {
-    const nextSessions = activeSessions.filter(s => !s.isEnded);
-    setActiveSessions(nextSessions);
-    saveAndBroadcast(bookings, games, packages, nextSessions);
+  const handleClearEndedNotifications = async () => {
+    try {
+      const ended = activeSessions.filter(s => s.isEnded);
+      for (const s of ended) {
+        await fbDeleteActiveSession(s.id);
+      }
+    } catch (e) {
+      console.error('Error clearing ended notifications:', e);
+    }
   };
 
   // Terminal Profile Logins

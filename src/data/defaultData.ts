@@ -118,6 +118,10 @@ export const DEFAULT_PACKAGES: GamePackage[] = [
 ];
 
 export const ACCOUNTS = {
+  admins: [
+    { username: 'Rahin', password: 'rahin5566' },
+    { username: 'Prodip', password: 'prodip5566' }
+  ],
   admin: {
     username: 'Rahin',
     password: 'rahin5566'
