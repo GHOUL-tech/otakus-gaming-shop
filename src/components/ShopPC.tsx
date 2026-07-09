@@ -206,27 +206,9 @@ export default function ShopPC({
       return;
     }
 
-    // Code is valid! Automatically start the play session immediately
-    const durationMinutes = booking.duration * 60;
-    const startTime = new Date();
-    const endTime = new Date(startTime.getTime() + durationMinutes * 60 * 1000);
-
-    const newSession: ActiveSession = {
-      id: booking.code,
-      bookingId: booking.id,
-      code: booking.code,
-      system: booking.system,
-      customerName: booking.name,
-      durationMinutes,
-      startTime: startTime.toISOString(),
-      endTime: endTime.toISOString(),
-      isActive: true,
-      isEnded: false
-    };
-
-    onStartSession(newSession);
-    setFoundBooking(null);
-    setSearchCode('');
+    // Code is valid! Display pre-activation details card for manual user activation
+    setFoundBooking(booking);
+    setSearchError('');
   };
 
   const handleStartPlay = () => {

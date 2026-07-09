@@ -110,49 +110,12 @@ export async function seedInitialDataIfEmpty() {
       }
     }
 
-    // 3. Seed Bookings
-    let bookingsSnap;
+    // 3. Clean up and remove any pre-seeded bookings (orders)
     try {
-      bookingsSnap = await getDocs(collection(db, BOOKINGS_COL));
+      await deleteDoc(doc(db, BOOKINGS_COL, 'seed-1'));
+      await deleteDoc(doc(db, BOOKINGS_COL, 'seed-2'));
     } catch (e) {
-      handleFirestoreError(e, OperationType.GET, BOOKINGS_COL);
-    }
-
-    if (bookingsSnap.empty) {
-      console.log('Seeding initial bookings to Firestore...');
-      const initialBookings: Booking[] = [
-        {
-          id: 'seed-1',
-          name: 'Shakil Khan',
-          phone: '01712345678',
-          system: 'PC',
-          date: new Date().toISOString().split('T')[0],
-          time: '14:00',
-          duration: 2,
-          amount: 200,
-          status: 'approved',
-          code: '#PC-8821'
-        },
-        {
-          id: 'seed-2',
-          name: 'Nayeem Hasan',
-          phone: '01899112233',
-          system: 'PSP',
-          date: new Date().toISOString().split('T')[0],
-          time: '16:30',
-          duration: 1,
-          amount: 60,
-          status: 'approved',
-          code: '#PSP-4412'
-        }
-      ];
-      for (const b of initialBookings) {
-        try {
-          await setDoc(doc(db, BOOKINGS_COL, b.id), b);
-        } catch (e) {
-          handleFirestoreError(e, OperationType.WRITE, `${BOOKINGS_COL}/${b.id}`);
-        }
-      }
+      console.warn('Could not clean up seed bookings:', e);
     }
   } catch (error) {
     console.error('Error seeding data:', error);

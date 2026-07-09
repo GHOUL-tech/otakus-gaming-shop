@@ -73,7 +73,7 @@ export default function Prebook({ bookings, packages, onAddBooking }: PrebookPro
     );
 
     if (hasConflict && conflictingBooking) {
-      alert(`Cannot Prebook: Slot overlaps with an existing booking by ${conflictingBooking.name}.`);
+      setConflictWarning(`Cannot Prebook: Slot overlaps with an existing booking by ${conflictingBooking.name}.`);
       return;
     }
 
