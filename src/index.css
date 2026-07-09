@@ -1,0 +1,65 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Space+Grotesk:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  --color-gaming-purple: #00FF00;
+  --color-gaming-cyan: #ffffff;
+  --color-gaming-green: #00FF00;
+  --color-gaming-pink: #111111;
+  --color-gaming-accent: #00FF00;
+}
+
+body {
+  background-color: #050505;
+  color: #ffffff;
+}
+
+/* Custom scrollbars for a premium dark gaming look */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #050505;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 0, 0.2);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 255, 0, 0.4);
+}
+
+/* Custom green glowing effects */
+.text-glow-green {
+  text-shadow: 0 0 8px rgba(0, 255, 0, 0.6), 0 0 16px rgba(0, 255, 0, 0.3);
+}
+
+.text-glow-purple {
+  text-shadow: 0 0 8px rgba(0, 255, 0, 0.6);
+}
+
+.text-glow-cyan {
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+}
+
+.box-glow-green {
+  box-shadow: 0 0 15px rgba(0, 255, 0, 0.15);
+}
+
+.box-glow-purple {
+  box-shadow: 0 0 15px rgba(0, 255, 0, 0.15);
+}
+
+/* CRT monitor lines effect for terminal elements */
+.crt-lines {
+  background: linear-gradient(rgba(5, 5, 5, 0) 50%, rgba(0, 0, 0, 0.4) 50%), linear-gradient(90deg, rgba(0, 255, 0, 0.05), rgba(0, 0, 0, 0.02), rgba(0, 255, 0, 0.05));
+  background-size: 100% 4px, 6px 100%;
+}

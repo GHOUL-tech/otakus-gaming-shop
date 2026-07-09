@@ -1,0 +1,6 @@
+{
+  "name": "OtakuS Gaming Haven",
+  "description": "Premium PC and PSP gaming lounge management system featuring pre-booking schedules, walk-in billing, interactive session timers, custom game catalogs, and full admin tools.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
