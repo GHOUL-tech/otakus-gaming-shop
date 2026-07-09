@@ -69,7 +69,61 @@ export default function App() {
       setActiveSessions(data);
     });
 
-    // 3. Client active terminal profile (still saved in localstorage per client device)
+    // 3. Migrate any local storage data to Firestore (so user-added games & data are preserved!)
+    const migrateLocalDataToFirestore = async () => {
+      // Migrate Games
+      const storedGames = localStorage.getItem('gaming_shop_games');
+      if (storedGames) {
+        try {
+          const parsedGames: Game[] = JSON.parse(storedGames);
+          for (const game of parsedGames) {
+            if (game && game.id) {
+              await fbAddGame(game);
+            }
+          }
+          // Clear storage key after migration
+          localStorage.removeItem('gaming_shop_games');
+        } catch (e) {
+          console.error('Failed to migrate local games:', e);
+        }
+      }
+
+      // Migrate Packages
+      const storedPackages = localStorage.getItem('gaming_shop_packages');
+      if (storedPackages) {
+        try {
+          const parsedPkgs: GamePackage[] = JSON.parse(storedPackages);
+          for (const pkg of parsedPkgs) {
+            if (pkg && pkg.id) {
+              await fbAddPackage(pkg);
+            }
+          }
+          localStorage.removeItem('gaming_shop_packages');
+        } catch (e) {
+          console.error('Failed to migrate local packages:', e);
+        }
+      }
+
+      // Migrate Bookings
+      const storedBookings = localStorage.getItem('gaming_shop_bookings');
+      if (storedBookings) {
+        try {
+          const parsedBookings: Booking[] = JSON.parse(storedBookings);
+          for (const b of parsedBookings) {
+            if (b && b.id) {
+              await fbAddBooking(b);
+            }
+          }
+          localStorage.removeItem('gaming_shop_bookings');
+        } catch (e) {
+          console.error('Failed to migrate local bookings:', e);
+        }
+      }
+    };
+
+    migrateLocalDataToFirestore();
+
+    // 4. Client active terminal profile (still saved in localstorage per client device)
     const storedProfile = localStorage.getItem('gaming_shop_terminal_profile');
     if (storedProfile) {
       setLoggedInProfile(storedProfile as 'PC' | 'PSP');
